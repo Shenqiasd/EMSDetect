@@ -182,3 +182,30 @@ def test_build_meter_day_curve_invalid_date_not_full_null() -> None:
 
     assert result.loc[0, "is_full_null"].item() is False
     assert result.loc[0, "usable_for_feature"].item() is False
+
+
+def test_build_meter_day_curve_dedupes_normalized_dates() -> None:
+    raw = pd.DataFrame(
+        [
+            {
+                "CONS_NO": "C9",
+                "MADE_NO": "M10",
+                "DATA_DATE": "2025/8/1",
+                "NULL_RATE": 0.0,
+                "D1": "1",
+                "D2": "2",
+            },
+            {
+                "CONS_NO": "C9",
+                "MADE_NO": "M10",
+                "DATA_DATE": "2025/08/01",
+                "NULL_RATE": 0.0,
+                "D1": "3",
+                "D2": "4",
+            },
+        ]
+    )
+
+    result = build_meter_day_curve(raw)
+
+    assert len(result) == 1

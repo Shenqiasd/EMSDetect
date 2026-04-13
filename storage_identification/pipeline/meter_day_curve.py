@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 
 KEY_COLUMNS = ["CONS_NO", "MADE_NO", "DATA_DATE"]
-DEDUPE_KEY_COLUMNS = ["CONS_NO", "MADE_NO", "_raw_data_date"]
+DEDUPE_KEY_COLUMNS = ["CONS_NO", "MADE_NO", "_dedupe_date"]
 
 
 def build_meter_day_curve(raw_df: pd.DataFrame) -> pd.DataFrame:
@@ -21,11 +21,13 @@ def build_meter_day_curve(raw_df: pd.DataFrame) -> pd.DataFrame:
     else:
         df["_curve_missing_rate"] = 1.0
     df["_invalid_date"] = df["DATA_DATE"].isna()
+    df["_dedupe_date"] = df["DATA_DATE"].astype(str)
+    df["_dedupe_date"] = df["_dedupe_date"].where(~df["_invalid_date"], df["_raw_data_date"])
     df["_effective_null_rate"] = df[["NULL_RATE", "_curve_missing_rate"]].max(axis=1)
 
     df = (
         df.sort_values(
-            ["_effective_null_rate", "_curve_missing_rate", "_invalid_date", "NULL_RATE", *curve_cols, "_raw_data_date"],
+            ["_effective_null_rate", "_curve_missing_rate", "_invalid_date", "NULL_RATE", *curve_cols, "_dedupe_date"],
             ascending=True,
         )
         .drop_duplicates(subset=DEDUPE_KEY_COLUMNS, keep="first")
@@ -38,5 +40,13 @@ def build_meter_day_curve(raw_df: pd.DataFrame) -> pd.DataFrame:
     df["is_full_null"] = df["_effective_null_rate"] >= 1.0
     df["is_partial_null"] = (df["_effective_null_rate"] > 0) & (df["_effective_null_rate"] < 1.0)
     df["usable_for_feature"] = (df["_effective_null_rate"] < 0.5) & (~df["_invalid_date"])
-    df = df.drop(columns=["_curve_missing_rate", "_effective_null_rate", "_invalid_date", "_raw_data_date"])
+    df = df.drop(
+        columns=[
+            "_curve_missing_rate",
+            "_effective_null_rate",
+            "_invalid_date",
+            "_raw_data_date",
+            "_dedupe_date",
+        ]
+    )
     return df
