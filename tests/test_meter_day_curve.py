@@ -134,3 +134,51 @@ def test_build_meter_day_curve_prefers_effective_quality_over_null_rate() -> Non
 
     assert result.loc[0, "NULL_RATE"] == 0.1
     assert result.loc[0, "usable_for_feature"].item() is True
+
+
+def test_build_meter_day_curve_keeps_distinct_malformed_dates() -> None:
+    raw = pd.DataFrame(
+        [
+            {
+                "CONS_NO": "C7",
+                "MADE_NO": "M8",
+                "DATA_DATE": "bad-1",
+                "NULL_RATE": 0.0,
+                "D1": "1",
+                "D2": "2",
+            },
+            {
+                "CONS_NO": "C7",
+                "MADE_NO": "M8",
+                "DATA_DATE": "bad-2",
+                "NULL_RATE": 0.0,
+                "D1": "3",
+                "D2": "4",
+            },
+        ]
+    )
+
+    result = build_meter_day_curve(raw)
+
+    assert len(result) == 2
+    assert result["DATA_DATE"].isna().sum() == 2
+
+
+def test_build_meter_day_curve_invalid_date_not_full_null() -> None:
+    raw = pd.DataFrame(
+        [
+            {
+                "CONS_NO": "C8",
+                "MADE_NO": "M9",
+                "DATA_DATE": "bad-date",
+                "NULL_RATE": 0.0,
+                "D1": "1",
+                "D2": "2",
+            }
+        ]
+    )
+
+    result = build_meter_day_curve(raw)
+
+    assert result.loc[0, "is_full_null"].item() is False
+    assert result.loc[0, "usable_for_feature"].item() is False
