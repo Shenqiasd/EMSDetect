@@ -24,7 +24,7 @@ def build_meter_day_curve(raw_df: pd.DataFrame) -> pd.DataFrame:
 
     df = (
         df.sort_values(
-            ["NULL_RATE", "_effective_null_rate", "_curve_missing_rate", "_invalid_date", *curve_cols],
+            ["_effective_null_rate", "_curve_missing_rate", "_invalid_date", "NULL_RATE", *curve_cols],
             ascending=True,
         )
         .drop_duplicates(subset=KEY_COLUMNS, keep="first")

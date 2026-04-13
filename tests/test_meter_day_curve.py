@@ -106,3 +106,31 @@ def test_build_meter_day_curve_ignores_non_contract_columns() -> None:
     result = build_meter_day_curve(raw)
 
     assert result.loc[0, "usable_for_feature"].item() is True
+
+
+def test_build_meter_day_curve_prefers_effective_quality_over_null_rate() -> None:
+    raw = pd.DataFrame(
+        [
+            {
+                "CONS_NO": "C6",
+                "MADE_NO": "M7",
+                "DATA_DATE": "2025/8/6",
+                "NULL_RATE": 0.0,
+                "D1": "bad",
+                "D2": None,
+            },
+            {
+                "CONS_NO": "C6",
+                "MADE_NO": "M7",
+                "DATA_DATE": "2025/8/6",
+                "NULL_RATE": 0.1,
+                "D1": "1",
+                "D2": "2",
+            },
+        ]
+    )
+
+    result = build_meter_day_curve(raw)
+
+    assert result.loc[0, "NULL_RATE"] == 0.1
+    assert result.loc[0, "usable_for_feature"].item() is True
