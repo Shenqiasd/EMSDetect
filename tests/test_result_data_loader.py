@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from storage_identification.config import PipelineConfig
+import pytest
+
+from storage_identification.config import PipelineConfig, RESULT_COLUMNS
 from storage_identification.io.result_data_loader import load_all_result_data
 
 
@@ -16,7 +18,7 @@ def test_pipeline_config_points_to_expected_output_layers(tmp_path: Path) -> Non
     assert cfg.cons_summary_path.name == "cons_summary.parquet"
 
 
-def test_load_all_result_data_unions_all_result_csvs(pipeline_config, tmp_path: Path) -> None:
+def test_load_all_result_data_unions_all_result_csvs(pipeline_config) -> None:
     data_root = pipeline_config.dataset_root
     first_dir = data_root / "2025-08" / "batch-1" / "result-data"
     second_dir = data_root / "2025-09" / "result-data"
@@ -35,6 +37,25 @@ def test_load_all_result_data_unions_all_result_csvs(pipeline_config, tmp_path: 
 
     df = load_all_result_data(data_root)
 
-    assert list(df.columns) == ["CONS_NO", "MADE_NO", "DATA_DATE", "NULL_RATE", "D1", "D2"]
+    assert list(df.columns) == RESULT_COLUMNS
     assert len(df) == 2
     assert sorted(df["DATA_DATE"].tolist()) == ["2025/8/1", "2025/9/1"]
+
+
+def test_load_all_result_data_returns_empty_result_columns(pipeline_config) -> None:
+    df = load_all_result_data(pipeline_config.dataset_root)
+
+    assert list(df.columns) == RESULT_COLUMNS
+    assert df.empty
+
+
+def test_load_all_result_data_rejects_missing_required_columns(pipeline_config) -> None:
+    data_root = pipeline_config.dataset_root
+    result_dir = data_root / "2025-10" / "result-data"
+    result_dir.mkdir(parents=True)
+
+    content = "TG_NO,TG_NAME,MADE_NO,DATA_DATE,NULL_RATE,D1\n,,M1,2025/10/1,0.0,10\n"
+    (result_dir / "bad.csv").write_text(content, encoding="utf-8")
+
+    with pytest.raises(ValueError, match="Missing required columns"):
+        load_all_result_data(data_root)
