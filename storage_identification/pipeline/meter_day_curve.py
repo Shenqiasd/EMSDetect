@@ -7,15 +7,26 @@ KEY_COLUMNS = ["CONS_NO", "MADE_NO", "DATA_DATE"]
 
 def build_meter_day_curve(raw_df: pd.DataFrame) -> pd.DataFrame:
     df = raw_df.copy()
-    curve_cols = [col for col in df.columns if col.startswith("D") and col != "DATA_DATE"]
+    curve_cols = [f"D{idx}" for idx in range(1, 97) if f"D{idx}" in df.columns]
 
     df["NULL_RATE"] = pd.to_numeric(df["NULL_RATE"], errors="coerce").fillna(1.0)
-    df["DATA_DATE"] = pd.to_datetime(df["DATA_DATE"], format="%Y/%m/%d")
+    df["DATA_DATE"] = pd.to_datetime(df["DATA_DATE"], format="%Y/%m/%d", errors="coerce")
     for col in curve_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
+    if curve_cols:
+        df["_curve_missing_rate"] = df[curve_cols].isna().mean(axis=1)
+    else:
+        df["_curve_missing_rate"] = 1.0
+    df["_invalid_date"] = df["DATA_DATE"].isna()
+    df["_effective_null_rate"] = df[["NULL_RATE", "_curve_missing_rate"]].max(axis=1)
+    df["_effective_null_rate"] = df["_effective_null_rate"].where(~df["_invalid_date"], 1.0)
+
     df = (
-        df.sort_values("NULL_RATE", ascending=True)
+        df.sort_values(
+            ["NULL_RATE", "_effective_null_rate", "_curve_missing_rate", "_invalid_date", *curve_cols],
+            ascending=True,
+        )
         .drop_duplicates(subset=KEY_COLUMNS, keep="first")
         .reset_index(drop=True)
     )
@@ -23,7 +34,8 @@ def build_meter_day_curve(raw_df: pd.DataFrame) -> pd.DataFrame:
     df["month"] = df["DATA_DATE"].dt.month
     df["day_of_week"] = df["DATA_DATE"].dt.dayofweek
     df["is_weekend"] = df["day_of_week"].isin([5, 6])
-    df["is_full_null"] = df["NULL_RATE"] >= 1.0
-    df["is_partial_null"] = (df["NULL_RATE"] > 0) & (df["NULL_RATE"] < 1.0)
-    df["usable_for_feature"] = df["NULL_RATE"] < 0.5
+    df["is_full_null"] = df["_effective_null_rate"] >= 1.0
+    df["is_partial_null"] = (df["_effective_null_rate"] > 0) & (df["_effective_null_rate"] < 1.0)
+    df["usable_for_feature"] = (df["_effective_null_rate"] < 0.5) & (~df["_invalid_date"])
+    df = df.drop(columns=["_curve_missing_rate", "_effective_null_rate", "_invalid_date"])
     return df
