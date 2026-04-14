@@ -46,6 +46,7 @@ def test_meter_summary_counts_and_uncertain_label() -> None:
     assert summary["meter_storage_score"] == 58
     assert summary["meter_storage_label"] == "uncertain"
     assert summary["positive_day_ratio"] == 2 / 3
+    assert summary["top_hit_rules"] == ["charge_discharge_pair", "charge_discharge_pair", "none"]
 
 
 def test_meter_summary_does_not_promote_midrange_repeat_days_to_has_storage() -> None:
@@ -201,3 +202,32 @@ def test_meter_summary_promotes_three_strong_positive_days_to_has_storage_even_w
 
     assert summary["strong_positive_day_count"] == 3
     assert summary["meter_storage_label"] == "has_storage"
+
+
+def test_meter_summary_keeps_top_hit_rules_for_rollup_evidence() -> None:
+    rows = [
+        {
+            "CONS_NO": "C1",
+            "MADE_NO": "M1",
+            "DATA_DATE": pd.Timestamp("2025-08-01"),
+            "day_storage_score": 70,
+            "day_label": "strong_positive",
+            "hit_rules": "charge_discharge_pair",
+            "evidence_summary": "strong",
+            "usable_for_feature": True,
+        },
+        {
+            "CONS_NO": "C1",
+            "MADE_NO": "M1",
+            "DATA_DATE": pd.Timestamp("2025-08-02"),
+            "day_storage_score": 40,
+            "day_label": "weak_positive",
+            "hit_rules": "valley_charge_only",
+            "evidence_summary": "weak",
+            "usable_for_feature": True,
+        },
+    ]
+
+    summary = build_meter_summary(pd.DataFrame(rows)).iloc[0]
+
+    assert summary["top_hit_rules"] == ["charge_discharge_pair", "valley_charge_only"]

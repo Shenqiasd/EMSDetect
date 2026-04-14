@@ -16,6 +16,7 @@ METER_SUMMARY_COLUMNS = [
     "meter_storage_score",
     "meter_storage_label",
     "meter_top_evidence_days",
+    "top_hit_rules",
     "usable_day_count",
 ]
 
@@ -89,10 +90,17 @@ def build_meter_summary(day_features: pd.DataFrame) -> pd.DataFrame:
         .rename("meter_top_evidence_days")
         .reset_index()
     )
+    top_hit_rules = (
+        top_days.groupby(group_keys, dropna=False)["hit_rules"]
+        .agg(list)
+        .rename("top_hit_rules")
+        .reset_index()
+    )
     result = result.merge(usable_day_count, on=group_keys, how="left")
     result = result.merge(strong_avg, on=group_keys, how="left")
     result = result.merge(avg_top5, on=group_keys, how="left")
     result = result.merge(evidence_days, on=group_keys, how="left")
+    result = result.merge(top_hit_rules, on=group_keys, how="left")
     result["observed_day_count"] = result["observed_day_count"].fillna(0).astype(int)
     result["strong_positive_day_count"] = result["strong_positive_day_count"].fillna(0).astype(int)
     result["weak_positive_day_count"] = result["weak_positive_day_count"].fillna(0).astype(int)
@@ -116,4 +124,5 @@ def build_meter_summary(day_features: pd.DataFrame) -> pd.DataFrame:
     result["meter_top_evidence_days"] = result["meter_top_evidence_days"].apply(
         lambda value: value if isinstance(value, list) else []
     )
+    result["top_hit_rules"] = result["top_hit_rules"].apply(lambda value: value if isinstance(value, list) else [])
     return result.loc[:, METER_SUMMARY_COLUMNS]

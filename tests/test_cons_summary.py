@@ -123,3 +123,52 @@ def test_cons_summary_marks_uncertain_when_weak_evidence_accumulates() -> None:
     summary = build_cons_summary(pd.DataFrame(rows)).iloc[0]
 
     assert summary["cons_storage_label"] == "uncertain"
+
+
+def test_cons_summary_respects_meter_has_storage_override() -> None:
+    rows = [
+        {
+            "CONS_NO": "C1",
+            "MADE_NO": "M1",
+            "usable_day_count": 20,
+            "meter_storage_score": 72,
+            "meter_storage_label": "has_storage",
+            "positive_day_ratio": 0.3,
+            "meter_top_evidence_days": ["2025-08-01"],
+            "top_hit_rules": ["charge_discharge_pair"],
+        },
+        {
+            "CONS_NO": "C1",
+            "MADE_NO": "M2",
+            "usable_day_count": 10,
+            "meter_storage_score": 10,
+            "meter_storage_label": "no_storage",
+            "positive_day_ratio": 0.0,
+            "meter_top_evidence_days": ["2025-08-03"],
+            "top_hit_rules": ["none"],
+        },
+    ]
+
+    summary = build_cons_summary(pd.DataFrame(rows)).iloc[0]
+
+    assert summary["strong_positive_meter_count"] == 1
+    assert summary["cons_storage_label"] == "has_storage"
+
+
+def test_cons_summary_propagates_top_hit_rules_from_meter_summary() -> None:
+    rows = [
+        {
+            "CONS_NO": "C1",
+            "MADE_NO": "M1",
+            "usable_day_count": 20,
+            "meter_storage_score": 85,
+            "meter_storage_label": "has_storage",
+            "positive_day_ratio": 0.8,
+            "meter_top_evidence_days": ["2025-08-01"],
+            "top_hit_rules": ["charge_discharge_pair", "valley_charge_only"],
+        }
+    ]
+
+    summary = build_cons_summary(pd.DataFrame(rows)).iloc[0]
+
+    assert summary["top_hit_rules"] == ["charge_discharge_pair", "valley_charge_only"]

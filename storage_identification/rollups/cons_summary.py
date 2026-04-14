@@ -40,8 +40,12 @@ def build_cons_summary(meter_summary: pd.DataFrame) -> pd.DataFrame:
 
     grouped = work.groupby("CONS_NO", dropna=False)
     active_mask = work["usable_day_count"].fillna(0).astype(float) > 0
-    strong_positive_mask = (work["meter_storage_score"].fillna(0.0) >= 80) & active_mask
-    positive_mask = (work["meter_storage_score"].fillna(0.0) >= 35) & active_mask
+    strong_positive_mask = (
+        (work["meter_storage_score"].fillna(0.0) >= 80) | (work["meter_storage_label"] == "has_storage")
+    ) & active_mask
+    positive_mask = (
+        (work["meter_storage_score"].fillna(0.0) >= 35) | work["meter_storage_label"].isin(["has_storage", "uncertain"])
+    ) & active_mask
     weak_mask = (work["meter_storage_score"].fillna(0.0) >= 30) & active_mask
 
     result = grouped.agg(
