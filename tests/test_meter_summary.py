@@ -126,4 +126,78 @@ def test_meter_summary_excludes_null_dates_from_positive_ratio() -> None:
 
     assert summary["observed_day_count"] == 1
     assert summary["strong_positive_day_count"] == 0
+    assert summary["avg_day_storage_score"] == 10
     assert summary["positive_day_ratio"] == 0
+    assert summary["meter_top_evidence_days"] == ["2025-08-01"]
+
+
+def test_meter_summary_excludes_invalid_date_strings_from_aggregates() -> None:
+    rows = [
+        {
+            "CONS_NO": "C1",
+            "MADE_NO": "M1",
+            "DATA_DATE": "bad-date",
+            "day_storage_score": 80,
+            "day_label": "strong_positive",
+            "hit_rules": "charge_discharge_pair",
+            "evidence_summary": "bad-date",
+            "usable_for_feature": True,
+        },
+        {
+            "CONS_NO": "C1",
+            "MADE_NO": "M1",
+            "DATA_DATE": pd.Timestamp("2025-08-01"),
+            "day_storage_score": 10,
+            "day_label": "negative",
+            "hit_rules": "none",
+            "evidence_summary": "valid-date",
+            "usable_for_feature": True,
+        },
+    ]
+
+    summary = build_meter_summary(pd.DataFrame(rows)).iloc[0]
+
+    assert summary["observed_day_count"] == 1
+    assert summary["avg_day_storage_score"] == 10
+    assert summary["meter_top_evidence_days"] == ["2025-08-01"]
+
+
+def test_meter_summary_promotes_three_strong_positive_days_to_has_storage_even_with_many_negatives() -> None:
+    rows = []
+    for date, score in [
+        (pd.Timestamp("2025-08-01"), 82),
+        (pd.Timestamp("2025-08-02"), 78),
+        (pd.Timestamp("2025-08-03"), 75),
+    ]:
+        rows.append(
+            {
+                "CONS_NO": "C1",
+                "MADE_NO": "M1",
+                "DATA_DATE": date,
+                "day_storage_score": score,
+                "day_label": "strong_positive",
+                "hit_rules": "charge_discharge_pair",
+                "evidence_summary": "strong",
+                "usable_for_feature": True,
+            }
+        )
+
+    # Many additional negative days should not erase repeated strong-positive evidence.
+    for day in range(4, 14):
+        rows.append(
+            {
+                "CONS_NO": "C1",
+                "MADE_NO": "M1",
+                "DATA_DATE": pd.Timestamp(f"2025-08-{day:02d}"),
+                "day_storage_score": 0,
+                "day_label": "negative",
+                "hit_rules": "none",
+                "evidence_summary": "neg",
+                "usable_for_feature": True,
+            }
+        )
+
+    summary = build_meter_summary(pd.DataFrame(rows)).iloc[0]
+
+    assert summary["strong_positive_day_count"] == 3
+    assert summary["meter_storage_label"] == "has_storage"

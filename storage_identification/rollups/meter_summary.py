@@ -25,24 +25,37 @@ def build_meter_summary(day_features: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(columns=METER_SUMMARY_COLUMNS)
 
     work = day_features.copy()
+    work["DATA_DATE"] = pd.to_datetime(work["DATA_DATE"], errors="coerce", format="mixed")
     group_keys = ["CONS_NO", "MADE_NO"]
     work["_valid_day"] = work["DATA_DATE"].notna()
     work["_strong_positive_valid"] = ((work["day_label"] == "strong_positive") & work["_valid_day"]).astype(int)
     work["_weak_positive_valid"] = ((work["day_label"] == "weak_positive") & work["_valid_day"]).astype(int)
-    grouped = work.groupby(group_keys, dropna=False)
+    valid_work = work.loc[work["_valid_day"]].copy()
+    grouped = valid_work.groupby(group_keys, dropna=False)
+    result = work.loc[:, group_keys].drop_duplicates().reset_index(drop=True)
     usable_source = (
         work["usable_for_feature"].fillna(True).astype(bool)
         if "usable_for_feature" in work.columns
         else pd.Series(True, index=work.index)
     )
 
-    result = grouped.agg(
+    valid_summary = grouped.agg(
         observed_day_count=("DATA_DATE", "count"),
         strong_positive_day_count=("_strong_positive_valid", "sum"),
         weak_positive_day_count=("_weak_positive_valid", "sum"),
         avg_day_storage_score=("day_storage_score", "mean"),
         max_day_storage_score=("day_storage_score", "max"),
     ).reset_index()
+    result = result.merge(valid_summary, on=group_keys, how="left")
+
+    # Repeat-strong evidence should be resilient to many negative days.
+    strong_avg = (
+        valid_work.loc[valid_work["_strong_positive_valid"] > 0, group_keys + ["day_storage_score"]]
+        .groupby(group_keys, dropna=False)["day_storage_score"]
+        .mean()
+        .rename("strong_positive_avg_day_score")
+        .reset_index()
+    )
     usable_day_count = (
         work.loc[:, group_keys]
         .assign(usable_for_feature=usable_source.astype(int))
@@ -54,10 +67,10 @@ def build_meter_summary(day_features: pd.DataFrame) -> pd.DataFrame:
 
     result["positive_day_ratio"] = (
         result["strong_positive_day_count"] + result["weak_positive_day_count"]
-    ) / result["observed_day_count"].where(result["observed_day_count"] > 0, 1)
+    ) / result["observed_day_count"].fillna(0).where(result["observed_day_count"].fillna(0) > 0, 1)
 
     top_days = (
-        work.sort_values(group_keys + ["day_storage_score"], ascending=[True, True, False])
+        valid_work.sort_values(group_keys + ["day_storage_score"], ascending=[True, True, False])
         .groupby(group_keys, dropna=False)
         .head(5)
         .copy()
@@ -77,11 +90,16 @@ def build_meter_summary(day_features: pd.DataFrame) -> pd.DataFrame:
         .reset_index()
     )
     result = result.merge(usable_day_count, on=group_keys, how="left")
+    result = result.merge(strong_avg, on=group_keys, how="left")
     result = result.merge(avg_top5, on=group_keys, how="left")
     result = result.merge(evidence_days, on=group_keys, how="left")
+    result["observed_day_count"] = result["observed_day_count"].fillna(0).astype(int)
+    result["strong_positive_day_count"] = result["strong_positive_day_count"].fillna(0).astype(int)
+    result["weak_positive_day_count"] = result["weak_positive_day_count"].fillna(0).astype(int)
     result["avg_day_storage_score"] = result["avg_day_storage_score"].fillna(0.0)
     result["max_day_storage_score"] = result["max_day_storage_score"].fillna(0.0)
     result["avg_top5_day_score"] = result["avg_top5_day_score"].fillna(0.0)
+    result["strong_positive_avg_day_score"] = result["strong_positive_avg_day_score"].fillna(0.0)
 
     result["meter_storage_score"] = (
         result["avg_day_storage_score"] * 0.4
@@ -91,6 +109,10 @@ def build_meter_summary(day_features: pd.DataFrame) -> pd.DataFrame:
     result["meter_storage_label"] = result["meter_storage_score"].map(
         lambda score: "has_storage" if score >= 80 else "uncertain" if score >= 35 else "no_storage"
     )
+    repeated_strong_behavior = (result["strong_positive_day_count"] >= 3) & (
+        result["strong_positive_avg_day_score"] >= 75
+    )
+    result.loc[repeated_strong_behavior, "meter_storage_label"] = "has_storage"
     result["meter_top_evidence_days"] = result["meter_top_evidence_days"].apply(
         lambda value: value if isinstance(value, list) else []
     )

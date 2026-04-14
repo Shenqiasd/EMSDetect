@@ -9,8 +9,8 @@ def test_cons_summary_prefers_has_storage_label_and_counts_strong_meters() -> No
             "CONS_NO": "C1",
             "MADE_NO": "M1",
             "usable_day_count": 30,
-            "meter_storage_score": 78,
-            "meter_storage_label": "has_storage",
+            "meter_storage_score": 85,
+            "meter_storage_label": "uncertain",
             "positive_day_ratio": 0.8,
             "meter_top_evidence_days": ["2025-08-01"],
             "top_hit_rules": ["charge_discharge_pair"],
@@ -31,7 +31,7 @@ def test_cons_summary_prefers_has_storage_label_and_counts_strong_meters() -> No
 
     assert summary["meter_count"] == 2
     assert summary["strong_positive_meter_count"] == 1
-    assert summary["cons_storage_score"] == 78
+    assert summary["cons_storage_score"] == 85
     assert summary["cons_storage_label"] == "has_storage"
     assert summary["review_priority"] == 1.0
 
@@ -94,3 +94,32 @@ def test_cons_summary_counts_only_usable_meters_as_active() -> None:
 
     assert summary["meter_count"] == 2
     assert summary["active_meter_count"] == 1
+
+
+def test_cons_summary_marks_uncertain_when_weak_evidence_accumulates() -> None:
+    rows = [
+        {
+            "CONS_NO": "C1",
+            "MADE_NO": "M1",
+            "usable_day_count": 10,
+            "meter_storage_score": 32,
+            "meter_storage_label": "no_storage",
+            "positive_day_ratio": 0.2,
+            "meter_top_evidence_days": ["2025-08-01"],
+            "top_hit_rules": ["none"],
+        },
+        {
+            "CONS_NO": "C1",
+            "MADE_NO": "M2",
+            "usable_day_count": 10,
+            "meter_storage_score": 32,
+            "meter_storage_label": "no_storage",
+            "positive_day_ratio": 0.2,
+            "meter_top_evidence_days": ["2025-08-02"],
+            "top_hit_rules": ["none"],
+        },
+    ]
+
+    summary = build_cons_summary(pd.DataFrame(rows)).iloc[0]
+
+    assert summary["cons_storage_label"] == "uncertain"

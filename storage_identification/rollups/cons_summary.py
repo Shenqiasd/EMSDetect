@@ -39,11 +39,16 @@ def build_cons_summary(meter_summary: pd.DataFrame) -> pd.DataFrame:
         work["usable_day_count"] = 1
 
     grouped = work.groupby("CONS_NO", dropna=False)
+    active_mask = work["usable_day_count"].fillna(0).astype(float) > 0
+    strong_positive_mask = (work["meter_storage_score"].fillna(0.0) >= 80) & active_mask
+    positive_mask = (work["meter_storage_score"].fillna(0.0) >= 35) & active_mask
+    weak_mask = (work["meter_storage_score"].fillna(0.0) >= 30) & active_mask
+
     result = grouped.agg(
         meter_count=("MADE_NO", "count"),
         active_meter_count=("usable_day_count", lambda s: (s > 0).sum()),
-        positive_meter_count=("meter_storage_label", lambda s: s.isin(["has_storage", "uncertain"]).sum()),
-        strong_positive_meter_count=("meter_storage_label", lambda s: (s == "has_storage").sum()),
+        positive_meter_count=("MADE_NO", lambda s: int(positive_mask.loc[s.index].sum())),
+        strong_positive_meter_count=("MADE_NO", lambda s: int(strong_positive_mask.loc[s.index].sum())),
         cons_storage_score=("meter_storage_score", "max"),
     ).reset_index()
 
@@ -72,11 +77,18 @@ def build_cons_summary(meter_summary: pd.DataFrame) -> pd.DataFrame:
     result = result.merge(top_meters, on="CONS_NO", how="left")
     result = result.merge(evidence_days, on="CONS_NO", how="left")
     result = result.merge(hit_rules, on="CONS_NO", how="left")
+    weak_evidence = (
+        grouped["MADE_NO"]
+        .agg(lambda s: int(weak_mask.loc[s.index].sum()) >= 2)
+        .rename("weak_evidence")
+        .reset_index()
+    )
+    result = result.merge(weak_evidence, on="CONS_NO", how="left")
 
     strong_positive = result["strong_positive_meter_count"] >= 1
     positive_meter = result["positive_meter_count"] >= 1
     result["cons_storage_label"] = "no_storage"
-    result.loc[positive_meter, "cons_storage_label"] = "uncertain"
+    result.loc[positive_meter | result["weak_evidence"].fillna(False), "cons_storage_label"] = "uncertain"
     result.loc[strong_positive, "cons_storage_label"] = "has_storage"
     result["review_priority"] = result["cons_storage_score"].rank(ascending=False, method="dense")
 

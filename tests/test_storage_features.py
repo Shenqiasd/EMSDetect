@@ -166,3 +166,53 @@ def test_compute_storage_features_applies_noise_penalty_and_clips_at_zero() -> N
     assert result["noise_penalty"].item() == 10.0
     assert result["missing_penalty"].item() == 20.0
     assert result["day_storage_score"].item() == 0.0
+
+
+def test_compute_storage_features_rewards_repeatable_patterns_across_days() -> None:
+    rows: list[dict] = []
+    for date in [pd.Timestamp("2025-08-01"), pd.Timestamp("2025-08-02")]:
+        row = {
+            "CONS_NO": "C1",
+            "MADE_NO": "M1",
+            "DATA_DATE": date,
+            "usable_for_feature": True,
+        }
+        for i in range(1, 97):
+            if 10 <= i <= 20:
+                row[f"D{i}"] = 4.0
+            elif 70 <= i <= 80:
+                row[f"D{i}"] = 2.0
+            else:
+                row[f"D{i}"] = 3.0
+        rows.append(row)
+
+    result = compute_storage_features(pd.DataFrame(rows)).reset_index(drop=True)
+
+    assert result.loc[0, "multi_day_consistency_score"] == 0.0
+    assert result.loc[1, "recent_pattern_similarity"] > 0.0
+    assert result.loc[1, "multi_day_consistency_score"] > 0.0
+    assert result.loc[1, "day_storage_score"] - result.loc[0, "day_storage_score"] > 10.0
+
+
+def test_compute_storage_features_skips_invalid_dates_in_repeatability_logic() -> None:
+    rows: list[dict] = []
+    for date in ["bad-date", pd.Timestamp("2025-08-02")]:
+        row = {
+            "CONS_NO": "C1",
+            "MADE_NO": "M1",
+            "DATA_DATE": date,
+            "usable_for_feature": True,
+        }
+        for i in range(1, 97):
+            if 10 <= i <= 20:
+                row[f"D{i}"] = 4.0
+            elif 70 <= i <= 80:
+                row[f"D{i}"] = 2.0
+            else:
+                row[f"D{i}"] = 3.0
+        rows.append(row)
+
+    result = compute_storage_features(pd.DataFrame(rows)).reset_index(drop=True)
+
+    assert result.loc[1, "recent_pattern_similarity"] == 0.0
+    assert result.loc[1, "multi_day_consistency_score"] == 0.0
