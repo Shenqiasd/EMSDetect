@@ -59,3 +59,21 @@ def test_load_all_result_data_rejects_missing_required_columns(pipeline_config) 
 
     with pytest.raises(ValueError, match="Missing required columns"):
         load_all_result_data(data_root)
+
+
+def test_load_all_result_data_supports_chinese_result_directory_name(pipeline_config) -> None:
+    data_root = pipeline_config.dataset_root
+    result_dir = data_root / "2025年9月" / "结果数据"
+    result_dir.mkdir(parents=True)
+
+    content = (
+        "TG_NO,TG_NAME,CONS_NO,MADE_NO,DATA_DATE,NULL_RATE,D1,D2\n"
+        ",,C1,M1,2025/9/1,0.0,10,12\n"
+    )
+    (result_dir / "part1.csv").write_text(content, encoding="utf-8")
+
+    df = load_all_result_data(data_root)
+
+    assert list(df.columns) == RESULT_COLUMNS
+    assert len(df) == 1
+    assert df["CONS_NO"].tolist() == ["C1"]

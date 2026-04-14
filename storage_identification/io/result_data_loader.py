@@ -7,13 +7,14 @@ import pandas as pd
 from storage_identification.config import RESULT_COLUMNS
 
 REQUIRED_RESULT_COLUMNS = ("CONS_NO", "MADE_NO", "DATA_DATE", "NULL_RATE")
+RESULT_DIR_NAMES = {"result-data", "结果数据"}
 
 
 def _discover_result_csvs(dataset_root: Path) -> list[Path]:
     return sorted(
         path
         for path in dataset_root.rglob("*.csv")
-        if path.parent.name == "result-data"
+        if path.parent.name in RESULT_DIR_NAMES
     )
 
 
