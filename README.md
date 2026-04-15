@@ -32,6 +32,12 @@ Or run Uvicorn directly:
 python -m uvicorn storage_identification.reporting.main:app --host 0.0.0.0 --port 8000
 ```
 
+Railway can also use the repository root entrypoint:
+
+```powershell
+python main.py
+```
+
 The default data source is the bundled demo project under `storage_identification/reporting/demo_data`.
 
 To point the app at real project data, set:
