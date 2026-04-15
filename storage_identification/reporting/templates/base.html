@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ page_title }}</title>
+    <link rel="stylesheet" href="{{ request.url_for('static', path='report.css') }}" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/">Storage Report Platform</a>
+      {% if project %}
+      <nav class="top-nav">
+        <a href="/projects/{{ project.project_id }}">Overview</a>
+        <a href="/projects/{{ project.project_id }}/results">Results</a>
+        <a href="/projects/{{ project.project_id }}/methodology">Methodology</a>
+      </nav>
+      {% endif %}
+    </header>
+    <main class="page-shell">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

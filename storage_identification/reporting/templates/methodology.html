@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero slim-hero">
+  <p class="eyebrow">Methodology</p>
+  <h1>How The Identification Works</h1>
+  <p>The platform evaluates storage behavior at the day level, rolls evidence up to the meter level, and then assigns an enterprise-level conclusion.</p>
+</section>
+
+<section class="panel prose-panel">
+  <h2>Three-stage logic</h2>
+  <ol>
+    <li>Day-level detection checks whether a daily load profile shows repeated charge/discharge behavior.</li>
+    <li>Meter-level scoring aggregates repeated evidence over the full observation period.</li>
+    <li>Enterprise-level scoring uses the strongest supporting meters to classify each enterprise.</li>
+  </ol>
+</section>
+{% endblock %}
