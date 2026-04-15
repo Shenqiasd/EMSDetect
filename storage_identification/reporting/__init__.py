@@ -1,0 +1,2 @@
+"""Storage report platform package."""
+

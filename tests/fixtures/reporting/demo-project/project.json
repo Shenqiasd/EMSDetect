@@ -1,0 +1,8 @@
+{
+  "project_id": "demo-project",
+  "project_name": "Demo Storage Report",
+  "customer_name": "Demo Customer",
+  "summary_text": "Demo project summary",
+  "data_start_date": "2025-08-01",
+  "data_end_date": "2025-10-31"
+}
