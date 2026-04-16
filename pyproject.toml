@@ -21,6 +21,13 @@ dev = [
 requires = ["setuptools>=69.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools.package-data]
+storage_identification = [
+  "reporting/templates/*.html",
+  "reporting/static/*.css",
+  "reporting/demo_data/**/*",
+]
+
 [project.scripts]
 storage-report = "storage_identification.reporting.main:run"
 
