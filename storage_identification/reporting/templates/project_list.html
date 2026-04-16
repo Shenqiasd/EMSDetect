@@ -9,7 +9,7 @@
 
 <section class="card-grid">
   {% for project in projects %}
-  <article class="card">
+  <article class="card" style="animation-delay: {{ loop.index0 * 0.08 }}s">
     <p class="eyebrow">{{ project.customer_name or "储能识别" }}</p>
     <h2>{{ project.project_name }}</h2>
     <p>{{ project.summary_text }}</p>
