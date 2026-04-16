@@ -2,24 +2,24 @@
 
 {% block content %}
 <section class="hero">
-  <p class="eyebrow">Reusable Project Reports</p>
-  <h1>Storage Identification Reports</h1>
-  <p>Select a project to review conclusions, evidence, and recommended follow-up actions.</p>
+  <p class="eyebrow">储能识别分析报告</p>
+  <h1>项目报告中心</h1>
+  <p>选择一个项目，查看储能识别分析结论、支撑证据与后续建议。</p>
 </section>
 
 <section class="card-grid">
   {% for project in projects %}
   <article class="card">
-    <p class="eyebrow">{{ project.customer_name or "Storage Identification" }}</p>
+    <p class="eyebrow">{{ project.customer_name or "储能识别" }}</p>
     <h2>{{ project.project_name }}</h2>
     <p>{{ project.summary_text }}</p>
     <dl class="stats-inline">
-      <div><dt>Data period</dt><dd>{{ project.data_start_date }} to {{ project.data_end_date }}</dd></div>
-      <div><dt>Enterprises</dt><dd>{{ project.enterprise_total }}</dd></div>
-      <div><dt>High confidence</dt><dd>{{ project.high_confidence_total }}</dd></div>
-      <div><dt>Manual review</dt><dd>{{ project.manual_review_total }}</dd></div>
+      <div><dt>数据周期</dt><dd>{{ project.data_start_date }} 至 {{ project.data_end_date }}</dd></div>
+      <div><dt>企业总数</dt><dd>{{ project.enterprise_total }}</dd></div>
+      <div><dt>高置信</dt><dd>{{ project.high_confidence_total }}</dd></div>
+      <div><dt>待人工复核</dt><dd>{{ project.manual_review_total }}</dd></div>
     </dl>
-    <a class="button-link" href="/projects/{{ project.project_id }}">Open project</a>
+    <a class="button-link" href="/projects/{{ project.project_id }}">打开项目</a>
   </article>
   {% endfor %}
 </section>

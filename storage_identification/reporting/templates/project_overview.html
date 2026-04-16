@@ -1,28 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="hero hero-project">
-  <p class="eyebrow">{{ project.customer_name or "Storage Identification" }}</p>
+<section class="hero slim-hero">
+  <p class="eyebrow">{{ project.customer_name or "储能识别" }}</p>
   <h1>{{ project.project_name }}</h1>
   <p>{{ project.summary_text }}</p>
-  <p class="meta-line">Data period: {{ project.data_start_date }} to {{ project.data_end_date }}</p>
+  <p class="meta-line">数据周期：{{ project.data_start_date }} 至 {{ project.data_end_date }}</p>
 </section>
 
 <section class="kpi-grid">
   <article class="kpi-card">
-    <h2>Enterprise total</h2>
+    <h2>企业总数</h2>
     <p>{{ project.enterprise_total }}</p>
   </article>
   <article class="kpi-card accent">
-    <h2>High-confidence storage enterprises</h2>
+    <h2>高置信储能企业</h2>
     <p>{{ project.high_confidence_total }}</p>
   </article>
   <article class="kpi-card warn">
-    <h2>Manual review enterprises</h2>
+    <h2>待人工复核企业</h2>
     <p>{{ project.manual_review_total }}</p>
   </article>
   <article class="kpi-card soft">
-    <h2>No-storage enterprises</h2>
+    <h2>无储能企业</h2>
     <p>{{ project.no_storage_total }}</p>
   </article>
 </section>
@@ -30,28 +30,28 @@
 <section class="two-column">
   <article class="panel">
     <div class="panel-head">
-      <h2>High-confidence shortlist</h2>
-      <a href="/projects/{{ project.project_id }}/results?tab=high_confidence">See all</a>
+      <h2>高置信企业列表</h2>
+      <a href="/projects/{{ project.project_id }}/results?tab=high_confidence">查看全部</a>
     </div>
     <ul class="enterprise-list">
       {% for item in high_confidence %}
       <li>
         <a href="/projects/{{ project.project_id }}/enterprises/{{ item.cons_no }}">{{ item.cons_no }}</a>
-        <span>{{ "%.1f"|format(item.cons_storage_score) }}</span>
+        <span>{{ "%.1f"|format(item.cons_storage_score) }} 分</span>
       </li>
       {% endfor %}
     </ul>
   </article>
   <article class="panel">
     <div class="panel-head">
-      <h2>Manual review shortlist</h2>
-      <a href="/projects/{{ project.project_id }}/results?tab=review">See all</a>
+      <h2>待复核企业列表</h2>
+      <a href="/projects/{{ project.project_id }}/results?tab=review">查看全部</a>
     </div>
     <ul class="enterprise-list">
       {% for item in review %}
       <li>
         <a href="/projects/{{ project.project_id }}/enterprises/{{ item.cons_no }}">{{ item.cons_no }}</a>
-        <span>{{ "%.1f"|format(item.cons_storage_score) }}</span>
+        <span>{{ "%.1f"|format(item.cons_storage_score) }} 分</span>
       </li>
       {% endfor %}
     </ul>

@@ -2,31 +2,40 @@
 
 {% block content %}
 <section class="hero slim-hero">
-  <p class="eyebrow">Enterprise detail</p>
+  <p class="eyebrow">企业详情</p>
   <h1>{{ detail.enterprise.cons_no }}</h1>
-  <p>{{ detail.enterprise.business_label }} with score {{ "%.1f"|format(detail.enterprise.cons_storage_score) }}</p>
+  <p>
+    {% if detail.enterprise.business_label == 'high_confidence_storage' %}
+      <span class="badge badge-success">高置信储能</span>
+    {% elif detail.enterprise.business_label in ['storage_review', 'uncertain_review'] %}
+      <span class="badge badge-warn">待复核</span>
+    {% else %}
+      <span class="badge badge-neutral">无储能</span>
+    {% endif %}
+    &nbsp; 综合得分 {{ "%.1f"|format(detail.enterprise.cons_storage_score) }}
+  </p>
 </section>
 
 <section class="two-column">
   <article class="panel narrative-card">
-    <h2>Why This Enterprise Was Flagged</h2>
+    <h2>标记原因</h2>
     <p>{{ detail.explanation }}</p>
     <dl class="stats-inline">
-      <div><dt>Strong-signal meters</dt><dd>{{ detail.enterprise.strong_positive_meter_count }}</dd></div>
-      <div><dt>Positive-signal meters</dt><dd>{{ detail.enterprise.positive_meter_count }}</dd></div>
-      <div><dt>Top evidence dates</dt><dd>{{ detail.enterprise.top_evidence_days | join(", ") }}</dd></div>
+      <div><dt>强信号电表</dt><dd>{{ detail.enterprise.strong_positive_meter_count }}</dd></div>
+      <div><dt>正信号电表</dt><dd>{{ detail.enterprise.positive_meter_count }}</dd></div>
+      <div><dt>关键证据日期</dt><dd>{{ detail.enterprise.top_evidence_days | join("、") }}</dd></div>
     </dl>
   </article>
 
   <article class="panel">
-    <h2>Top supporting meters</h2>
+    <h2>关键支撑电表</h2>
     <div class="meter-stack">
       {% for meter in detail.top_meters %}
       <section class="meter-card">
         <h3>{{ meter.made_no }}</h3>
-        <p>{{ meter.label }} | score {{ "%.1f"|format(meter.score) }}</p>
-        <p>Evidence dates: {{ meter.evidence_days | join(", ") }}</p>
-        <p>Rules: {{ meter.hit_rules | join(", ") }}</p>
+        <p>{{ meter.label }} ｜ 得分 {{ "%.1f"|format(meter.score) }}</p>
+        <p>证据日期：{{ meter.evidence_days | join("、") }}</p>
+        <p>触发规则：{{ meter.hit_rules | join("、") }}</p>
       </section>
       {% endfor %}
     </div>

@@ -1,19 +1,19 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ page_title }}</title>
+    <title>{{ page_title }} — 储能识别报告平台</title>
     <link rel="stylesheet" href="{{ request.url_for('static', path='report.css') }}" />
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="/">Storage Report Platform</a>
+      <a class="brand" href="/">储能识别报告平台</a>
       {% if project %}
       <nav class="top-nav">
-        <a href="/projects/{{ project.project_id }}">Overview</a>
-        <a href="/projects/{{ project.project_id }}/results">Results</a>
-        <a href="/projects/{{ project.project_id }}/methodology">Methodology</a>
+        <a href="/projects/{{ project.project_id }}">项目概览</a>
+        <a href="/projects/{{ project.project_id }}/results">分析结果</a>
+        <a href="/projects/{{ project.project_id }}/methodology">识别方法</a>
       </nav>
       {% endif %}
     </header>

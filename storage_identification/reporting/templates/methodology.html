@@ -2,17 +2,17 @@
 
 {% block content %}
 <section class="hero slim-hero">
-  <p class="eyebrow">Methodology</p>
-  <h1>How The Identification Works</h1>
-  <p>The platform evaluates storage behavior at the day level, rolls evidence up to the meter level, and then assigns an enterprise-level conclusion.</p>
+  <p class="eyebrow">识别方法</p>
+  <h1>储能识别原理说明</h1>
+  <p>本平台通过日级负荷行为分析，逐层汇总至电表级和企业级，最终给出储能识别结论。</p>
 </section>
 
 <section class="panel prose-panel">
-  <h2>Three-stage logic</h2>
+  <h2>三阶段识别逻辑</h2>
   <ol>
-    <li>Day-level detection checks whether a daily load profile shows repeated charge/discharge behavior.</li>
-    <li>Meter-level scoring aggregates repeated evidence over the full observation period.</li>
-    <li>Enterprise-level scoring uses the strongest supporting meters to classify each enterprise.</li>
+    <li><strong>日级检测</strong> — 检查每日负荷曲线是否呈现重复的充放电行为特征。</li>
+    <li><strong>电表级评分</strong> — 将整个观测周期内的日级证据汇总，对每块电表进行储能行为评分。</li>
+    <li><strong>企业级评分</strong> — 综合该企业下最具支撑力的电表证据，给出企业级储能识别结论。</li>
   </ol>
 </section>
 {% endblock %}

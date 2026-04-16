@@ -2,21 +2,21 @@
 
 {% block content %}
 <section class="hero slim-hero">
-  <p class="eyebrow">Project results</p>
+  <p class="eyebrow">分析结果</p>
   <h1>{{ project.project_name }}</h1>
-  <p>Review enterprise conclusions, filter by category, and open detail pages for supporting evidence.</p>
+  <p>查看企业识别结论，按分类筛选，点击企业户号查看详细证据。</p>
 </section>
 
 <section class="panel filters">
   <div class="tab-row">
-    <a class="{{ 'active' if active_tab == 'all' else '' }}" href="/projects/{{ project.project_id }}/results?tab=all">All</a>
-    <a class="{{ 'active' if active_tab == 'high_confidence' else '' }}" href="/projects/{{ project.project_id }}/results?tab=high_confidence">High confidence</a>
-    <a class="{{ 'active' if active_tab == 'review' else '' }}" href="/projects/{{ project.project_id }}/results?tab=review">Manual review</a>
+    <a class="{{ 'active' if active_tab == 'all' else '' }}" href="/projects/{{ project.project_id }}/results?tab=all">全部</a>
+    <a class="{{ 'active' if active_tab == 'high_confidence' else '' }}" href="/projects/{{ project.project_id }}/results?tab=high_confidence">高置信</a>
+    <a class="{{ 'active' if active_tab == 'review' else '' }}" href="/projects/{{ project.project_id }}/results?tab=review">待复核</a>
   </div>
   <form class="search-row" method="get">
     <input type="hidden" name="tab" value="{{ active_tab }}" />
-    <input type="search" name="q" value="{{ query }}" placeholder="Search enterprise account number" />
-    <button type="submit">Apply</button>
+    <input type="search" name="q" value="{{ query }}" placeholder="搜索企业户号…" />
+    <button type="submit">搜索</button>
   </form>
 </section>
 
@@ -24,23 +24,31 @@
   <table>
     <thead>
       <tr>
-        <th>Enterprise</th>
-        <th>Conclusion</th>
-        <th>Score</th>
-        <th>Strong meters</th>
-        <th>Top meter</th>
-        <th>Why flagged</th>
+        <th>企业户号</th>
+        <th>结论</th>
+        <th>得分</th>
+        <th>强信号电表数</th>
+        <th>首要电表</th>
+        <th>标记原因</th>
       </tr>
     </thead>
     <tbody>
       {% for item in enterprises %}
       <tr>
         <td><a href="/projects/{{ project.project_id }}/enterprises/{{ item.cons_no }}">{{ item.cons_no }}</a></td>
-        <td>{{ item.business_label }}</td>
+        <td>
+          {% if item.business_label == 'high_confidence_storage' %}
+            <span class="badge badge-success">高置信储能</span>
+          {% elif item.business_label in ['storage_review', 'uncertain_review'] %}
+            <span class="badge badge-warn">待复核</span>
+          {% else %}
+            <span class="badge badge-neutral">无储能</span>
+          {% endif %}
+        </td>
         <td>{{ "%.1f"|format(item.cons_storage_score) }}</td>
         <td>{{ item.strong_positive_meter_count }}</td>
-        <td>{{ item.top_meter_list[0] if item.top_meter_list else '-' }}</td>
-        <td>{{ item.review_reason }}</td>
+        <td>{{ item.top_meter_list[0] if item.top_meter_list else '—' }}</td>
+        <td>{{ item.review_reason or '—' }}</td>
       </tr>
       {% endfor %}
     </tbody>
